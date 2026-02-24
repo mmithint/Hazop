@@ -1,60 +1,124 @@
 HAZOP_EXTRACTION_PROMPT = """You are a HAZOP (Hazard and Operability Study) expert analyzing a P&ID (Piping & Instrumentation Diagram).
 
-Analyze this P&ID and extract all HAZOP-relevant items into three categories. Return ONLY valid JSON with no additional text.
+Your goal is to extract ONLY the items relevant to performing a HAZOP study on the PRIMARY equipment (node) shown on this P&ID. Do NOT extract every instrument — only those that could CAUSE a process deviation or PROTECT against one.
 
-INCLUDE these items:
-- Major process equipment (vessels, columns, heat exchangers, pumps, compressors, reactors, tanks, filters, separators, drums, etc.)
-- Control valves (PCV, LCV, TCV, FCV, etc.) and their associated instruments
-- Safety devices (PSV, PRV, safety valves, rupture discs, check valves, emergency shutdown valves, ESD valves, blowdown valves, etc.)
+=== WHAT TO EXTRACT ===
 
-EXCLUDE these items (do NOT include them):
-- Transmitters (PT, TT, LT, FT, AT, etc.)
-- Indicators (PI, TI, LI, FI, AI, etc.)
-- Controllers (PIC, TIC, LIC, FIC, AIC, etc.) — but DO include control valves they actuate
-- Internal equipment components (baffles, weirs, demisters, sand weirs, stilling baffles, trays, packing, internals)
+## 1. Major Equipment (the node being studied)
+- The PRIMARY process equipment on this P&ID (vessel, separator, column, heat exchanger, etc.)
+- Include its operating and design parameters (pressure, temperature, size)
 
-Return this exact JSON structure:
+## 2. Instruments/Valves that can CAUSE deviations
+ONLY extract valves/instruments that meet ALL of these criteria:
+- They are on a PROCESS INLET or PROCESS OUTLET line of the primary equipment
+- They control FLOW, LEVEL, or PRESSURE into or out of the equipment
+- Their failure (fail open, fail closed, spurious operation) could cause a HAZOP deviation (High/Low Pressure, High/Low Level, High/Low Flow, High/Low Temperature)
+
+INCLUDE these types (if on process inlet/outlet lines):
+- Flow control valves (FCV, FSV) — failure affects flow and pressure
+- Level control valves (LCV) — failure affects level and can affect pressure
+- Pressure control valves (PCV) — failure directly affects pressure
+- Temperature control valves (TCV) — failure affects temperature
+- Emergency shutdown valves (XCV, SDV, ESDV, BSDV) — on process lines
+- On/Off valves on process lines that could block or release flow
+
+EXCLUDE these (they do NOT cause process deviations):
+- Chemical injection valves (small-bore injection quills, defoamer, demulsifier, corrosion inhibitor injection)
+- Sample valves and sample connections
+- Drain valves (to closed drain, open drain)
+- Vent valves (small utility vents)
+- Instrument isolation valves (root valves for pressure/level transmitters)
+- Analyzers and analyzer sample systems (BS&W, H2S, pH analyzers)
+- Mixers, static mixers on sample/analyzer lines
+- Any valve on a non-process utility line (instrument air, nitrogen, hydraulic, chemical injection tubing)
+
+## 3. Safety Devices that PROTECT against deviations
+ONLY extract safety devices that provide AUTOMATIC protection:
+- PSV (Pressure Safety Valve) — protects against high pressure
+- PSHH (Pressure Switch High-High) — initiates shutdown on high pressure
+- LSHH (Level Switch High-High) — initiates shutdown on high level
+- LSLL (Level Switch Low-Low) — initiates shutdown on low level
+- TSHH (Temperature Switch High-High) — initiates shutdown on high temperature
+- Gas Detection systems — initiates BSDV closure on gas leak
+- Deluge/TSE (Thermal Safety Element) — fire protection
+- BSDV (Boarding Shutdown Valve) — isolates flow on ESD
+
+EXCLUDE these (they are NOT automatic protective devices):
+- Alarms only (PAH, PAL, LAH, LAL, TAH, TAL) — alarms notify operators but do NOT automatically protect
+- Indicators (PI, TI, LI, FI) — display only
+- Transmitters (PT, TT, LT, FT) — sensing only (unless paired with a switch like PSHH)
+- Controllers (PIC, TIC, LIC, FIC) — control loop, not safety device
+- Manual valves, manual bypasses
+- Check valves on non-critical lines (injection, sample, drain)
+
+=== HOW TO DETERMINE LINE SERVICE ===
+
+For each valve/instrument, identify the line service:
+- **Gas**: Lines going to gas headers, flare, compressor suction, gas dehydration (look for "PG" in line designation)
+- **Liquid**: Lines going to liquid/oil headers, downstream separators, liquid outlets (look for "PL" in line designation)
+- **Two-phase**: Inlet lines from upstream equipment carrying mixed gas+liquid
+- Look at the line designation format: typically "SIZE-SERVICE-NUMBER-CLASS" (e.g., 10"-PG-304-A = 10 inch, Process Gas, line 304, class A)
+
+Line designation codes:
+- PG = Process Gas
+- PL = Process Liquid
+- PF = Process Flow (could be two-phase)
+- FH = Flare Header
+- DC = Drain Closed
+- SP = Sample/Chemical injection (EXCLUDE these)
+
+=== OUTPUT FORMAT ===
+
+Return ONLY valid JSON with no additional text or markdown fences:
+
 {
   "major_equipment": [
     {
-      "tag": "Equipment tag number (e.g., V-1001)",
-      "name": "Equipment name/description",
-      "type": "Equipment type (e.g., Vessel, Column, Heat Exchanger, Pump)",
-      "upstream_equipment": "Tag of upstream equipment or 'N/A'",
-      "downstream_equipment": "Tag of downstream equipment or 'N/A'",
-      "operating_parameters": "Operating conditions if shown (pressure, temperature, flow)",
-      "design_parameters": "Design conditions if shown (design pressure, design temperature)"
+      "tag": "Equipment tag number (e.g., MBD-1010)",
+      "name": "Equipment name/description from title block or callout",
+      "type": "Equipment type (e.g., Separator, Vessel, Column)",
+      "upstream_equipment": "Tag of upstream equipment feeding into this, or 'N/A'",
+      "downstream_equipment": "Tag of downstream equipment receiving from this, or 'N/A'",
+      "operating_parameters": "Operating conditions as shown (e.g., 'OPER.: 1850-185 PSIG')",
+      "design_parameters": "Design conditions as shown (e.g., 'DESIGN: 2120 PSIG AT 150°F')",
+      "size": "Physical size if shown (e.g., '78\" O.D. x 27'-0\" S/S')"
     }
   ],
   "instruments_causes": [
     {
-      "tag": "Instrument/valve tag (e.g., PCV-1001)",
-      "type": "Type (e.g., Pressure Control Valve, Level Control Valve)",
-      "description": "Brief description of function",
-      "associated_equipment": "Tag of associated equipment",
-      "position": "upstream or downstream of associated equipment",
-      "line_service": "Service type (gas, liquid, two-phase, steam, etc.)"
+      "tag": "Valve tag (e.g., FSV-1010)",
+      "type": "Type (e.g., Flow Shutdown Valve, Level Control Valve)",
+      "description": "What it does (e.g., 'Controls gas outlet flow from separator to compressor suction')",
+      "associated_equipment": "Tag of the primary equipment it serves",
+      "position": "inlet or outlet of associated equipment",
+      "line_tag": "Full line designation if visible (e.g., '10\"-PG-304-A')",
+      "line_service": "gas, liquid, or two-phase (determined from line designation and destination)",
+      "destination_or_source": "Where the line goes to or comes from (e.g., 'To Flash Gas Compressor 2nd Stage Suction')",
+      "fail_position": "Fail open, fail closed, or fail last position (if shown, otherwise 'Not shown')"
     }
   ],
   "safety_devices": [
     {
-      "tag": "Safety device tag (e.g., PSV-1001)",
-      "type": "Type (e.g., Pressure Safety Valve, Rupture Disc, Check Valve)",
-      "description": "Brief description of function/purpose",
-      "associated_equipment": "Tag of associated equipment",
-      "position": "upstream or downstream of associated equipment",
-      "line_service": "Service type (gas, liquid, two-phase, steam, etc.)",
-      "setpoint": "Set pressure/value if shown, or 'Not shown'"
+      "tag": "Safety device tag (e.g., PSV-1010)",
+      "type": "Type (e.g., Pressure Safety Valve, Pressure Switch High-High)",
+      "description": "What it protects against and how (e.g., 'Relieves excess pressure to HP flare')",
+      "associated_equipment": "Tag of equipment it protects",
+      "setpoint": "Set pressure if shown (e.g., '2120 PSIG'), or 'Not shown'",
+      "destination": "Where it relieves/vents to (e.g., 'HP Flare via 20\"-FH-513-A')",
+      "line_service": "gas, liquid, or two-phase"
     }
   ]
 }
 
-Important:
-- Extract ALL items visible on the P&ID for each category
+=== IMPORTANT REMINDERS ===
+
+- Focus on the PRIMARY equipment node only
+- Only include items that can CAUSE deviations or PROTECT against them
+- Do NOT include every instrument on the P&ID — be selective and HAZOP-relevant
 - Use exact tag numbers as shown on the drawing
 - If information is not visible or unclear, use "Not shown" or "N/A"
-- Return ONLY the JSON object, no explanation or markdown formatting"""
-
+- Return ONLY the JSON object, no explanation or markdown formatting
+- Quality over quantity: 5-10 well-identified cause instruments is typical for a single node"""
 
 CAUSES_GENERATION_PROMPT = """You are a HAZOP (Hazard and Operability Study) expert. Given a list of instruments/control valves from a P&ID and a specific process deviation, generate all plausible instrument-based causes for that deviation.
 
