@@ -149,6 +149,10 @@
     background-color: #E8F5E9 !important;
 }
 
+.worksheet-table td[rowspan] {
+    vertical-align: middle;
+}
+
 /* Risk level cell colors */
 .risk-a {
     background-color: #28a745 !important;

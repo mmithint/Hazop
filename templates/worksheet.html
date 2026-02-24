@@ -69,11 +69,13 @@
         <tbody>
             {% for row in worksheet.included_rows %}
             <tr class="{% if row.category == 'PAF' %}row-paf{% elif row.category == 'PD/LOR' %}row-pdlor{% else %}row-ecr{% endif %}">
-                <td class="fw-bold text-center">{{ row.number }}</td>
-                <td>{{ row.deviation }}</td>
-                <td>{{ row.cause }}</td>
-                <td class="text-nowrap">{{ row.drawing_ref }}</td>
-                <td class="ws-cell-intcon">{{ row.intermediate_consequence }}</td>
+                {% if loop.index0 % 3 == 0 %}
+                <td class="fw-bold text-center" rowspan="3">{{ row.number[:-1] }}</td>
+                <td rowspan="3">{{ row.deviation }}</td>
+                <td rowspan="3">{{ row.cause }}</td>
+                <td class="text-nowrap" rowspan="3">{{ row.drawing_ref }}</td>
+                <td class="ws-cell-intcon" rowspan="3">{{ row.intermediate_consequence }}</td>
+                {% endif %}
                 <td class="text-center fw-bold">
                     <span class="badge {% if row.category == 'PAF' %}bg-primary{% elif row.category == 'PD/LOR' %}bg-warning text-dark{% else %}bg-success{% endif %}">
                         {{ row.category }}
