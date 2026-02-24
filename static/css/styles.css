@@ -1,0 +1,237 @@
+/* Drop Zone */
+.drop-zone {
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+    background: #f8f9fa;
+}
+
+.drop-zone:hover,
+.drop-zone.dragover {
+    border-color: #0d6efd;
+    background-color: #e8f0fe;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+/* Editable Table Cells */
+.editable-cell {
+    padding: 0 !important;
+    vertical-align: middle !important;
+}
+
+.editable-cell input {
+    border: none;
+    background: transparent;
+    width: 100%;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.875rem;
+    outline: none;
+}
+
+.editable-cell input:focus {
+    background: #fff8e1;
+}
+
+/* Accordion tweaks */
+.accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    color: #0c63e4;
+}
+
+.table th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+/* Delete button in table */
+.btn-delete-row {
+    padding: 0.15rem 0.4rem;
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+/* Deviation checkboxes */
+.deviation-check {
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    transition: background-color 0.15s;
+}
+
+.deviation-check:hover {
+    background-color: #f8f9fa;
+}
+
+.deviation-check .form-check-input:checked ~ .form-check-label {
+    font-weight: 600;
+}
+
+/* Summary cards */
+.card.border-primary {
+    border-width: 2px;
+}
+
+/* Toast styling */
+.toast.bg-success .toast-body,
+.toast.bg-danger .toast-body {
+    color: #fff;
+}
+
+/* ===== Worksheet Table ===== */
+
+.worksheet-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+.worksheet-table {
+    min-width: 1600px;
+    margin-bottom: 0;
+    font-size: 0.82rem;
+}
+
+.worksheet-table thead th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    vertical-align: middle;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Column widths */
+.ws-col-num { width: 40px; }
+.ws-col-dev { width: 100px; }
+.ws-col-cause { width: 180px; }
+.ws-col-ref { width: 90px; }
+.ws-col-intcon { width: 200px; }
+.ws-col-cat { width: 70px; }
+.ws-col-scenario { width: 320px; }
+.ws-col-pec { width: 50px; }
+.ws-col-mit { width: 250px; }
+.ws-col-cme { width: 140px; }
+.ws-col-cnt { width: 50px; }
+.ws-col-rc { width: 50px; }
+.ws-col-rp { width: 50px; }
+.ws-col-rl { width: 60px; }
+
+/* Row colors: PAF = blue, PD/LOR = orange */
+.row-paf {
+    background-color: #D6EAF8 !important;
+}
+
+.row-pdlor {
+    background-color: #FDEBD0 !important;
+}
+
+/* Risk level cell colors */
+.risk-a {
+    background-color: #28a745 !important;
+    color: #fff;
+}
+
+.risk-b {
+    background-color: #8bc34a !important;
+    color: #fff;
+}
+
+.risk-c {
+    background-color: #ffc107 !important;
+    color: #000;
+}
+
+.risk-d {
+    background-color: #ff9800 !important;
+    color: #fff;
+}
+
+.risk-e {
+    background-color: #dc3545 !important;
+    color: #fff;
+}
+
+/* PEC bold red */
+.pec-yes {
+    color: #dc3545;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* Scenario comment bullets */
+.scenario-bullets {
+    padding-left: 14px;
+    list-style-type: disc;
+}
+
+.scenario-bullets li {
+    margin-bottom: 3px;
+    line-height: 1.3;
+}
+
+/* Mitigation bullets */
+.mitigation-bullets {
+    padding-left: 14px;
+    list-style-type: circle;
+}
+
+.mitigation-bullets li {
+    margin-bottom: 2px;
+    line-height: 1.3;
+}
+
+/* Intermediate consequence cell */
+.ws-cell-intcon {
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+/* Excluded row strikethrough */
+.excluded-row td {
+    color: #888;
+}
+
+/* Legend swatches */
+.legend-swatch {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+.risk-a.legend-swatch, .legend-swatch.risk-a { background-color: #28a745; }
+.risk-b.legend-swatch, .legend-swatch.risk-b { background-color: #8bc34a; }
+.risk-c-swatch { background-color: #ffc107; }
+.risk-d.legend-swatch, .legend-swatch.risk-d { background-color: #ff9800; }
+.risk-e.legend-swatch, .legend-swatch.risk-e { background-color: #dc3545; }
+
+/* Print styles */
+@media print {
+    .navbar, footer, .btn, .toast-container { display: none !important; }
+    .worksheet-table-wrapper { overflow: visible; border: none; }
+    .worksheet-table { min-width: auto; font-size: 9px; }
+    .worksheet-table thead th { font-size: 8px; }
+}

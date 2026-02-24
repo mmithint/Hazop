@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Generated Causes - HAZOP Analysis{% endblock %}
+
+{% block content %}
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay d-none">
+    <div class="text-center">
+        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h4>Generating HAZOP Worksheet...</h4>
+        <p class="text-muted">Analyzing causes with knowledge base tables. This may take 30-60 seconds.</p>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Generated Causes</h2>
+    <a href="{{ url_for('deviations') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Deviations
+    </a>
+</div>
+
+<div class="accordion" id="causesAccordion">
+    {% for deviation, cause_list in causes.items() %}
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button{% if not loop.first %} collapsed{% endif %}" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}">
+                <i class="bi bi-exclamation-triangle me-2"></i> {{ deviation }}
+                <span class="badge bg-primary ms-2">{{ cause_list | length }}</span>
+            </button>
+        </h2>
+        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse{% if loop.first %} show{% endif %}"
+             data-bs-parent="#causesAccordion">
+            <div class="accordion-body">
+                {% set outer_index = loop.index %}
+                {% if cause_list %}
+                <ul class="list-group list-group-flush">
+                    {% for cause in cause_list %}
+                    <li class="list-group-item">
+                        <div class="form-check">
+                            <input class="form-check-input cause-check" type="checkbox"
+                                   value="{{ cause }}" id="cause-{{ outer_index }}-{{ loop.index }}" checked>
+                            <label class="form-check-label" for="cause-{{ outer_index }}-{{ loop.index }}">
+                                {{ cause }}
+                            </label>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">No causes generated for this deviation.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="d-flex justify-content-between mt-4">
+    <a href="{{ url_for('deviations') }}" class="btn btn-outline-secondary btn-lg">
+        <i class="bi bi-arrow-left"></i> Back to Deviations
+    </a>
+    <button id="submitCauses" class="btn btn-success btn-lg">
+        Continue <i class="bi bi-arrow-right"></i>
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/causes.js') }}"></script>
+{% endblock %}

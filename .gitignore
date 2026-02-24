@@ -1,0 +1,100 @@
+# ==============================
+# Environment & secrets (NEVER push)
+# ==============================
+.env
+.env.local
+.env.*.local
+*.env
+
+# ==============================
+# Python
+# ==============================
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# Byte-compiled / cached
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+.htmlcov
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints
+
+# mypy
+.mypy_cache/
+.dmypy.json
+.dmypy
+
+# ==============================
+# IDE / Editor
+# ==============================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ==============================
+# OS
+# ==============================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==============================
+# Flask / app specific
+# ==============================
+instance/
+.webassets-cache
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploaded / generated files (if you store uploads locally)
+uploads/
+temp/
+tmp/
+*.log

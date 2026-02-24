@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Upload P&ID - HAZOP Analysis{% endblock %}
+
+{% block content %}
+<!-- Upload Section -->
+<div id="uploadSection">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="mb-4">Upload P&ID for HAZOP Analysis</h2>
+            <div id="dropZone" class="drop-zone">
+                <i class="bi bi-cloud-arrow-up display-3"></i>
+                <p class="mt-2 mb-1">Drag & drop your P&ID PDF here</p>
+                <p class="text-muted small">or click to browse (max 32MB)</p>
+                <input type="file" id="pdfInput" accept=".pdf" class="d-none">
+            </div>
+            <div id="fileInfo" class="d-none mt-3 alert alert-info d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-file-earmark-pdf"></i> <span id="fileName"></span></span>
+                <button class="btn btn-sm btn-outline-danger" id="clearFile"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <button id="analyzeBtn" class="btn btn-primary btn-lg w-100 mt-3" disabled>
+                <i class="bi bi-cpu"></i> Analyze P&ID
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay d-none">
+    <div class="text-center">
+        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h4>Analyzing P&ID...</h4>
+        <p class="text-muted">This may take 30-60 seconds</p>
+    </div>
+</div>
+
+<!-- Review Section -->
+<div id="reviewSection" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Review Extracted Items</h2>
+        <button class="btn btn-outline-secondary" id="backToUpload">
+            <i class="bi bi-arrow-left"></i> Upload Another
+        </button>
+    </div>
+
+    <div class="accordion" id="itemsAccordion">
+        <!-- Major Equipment -->
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#equipmentSection">
+                    <i class="bi bi-gear me-2"></i> Major Equipment
+                    <span class="badge bg-primary ms-2" id="equipmentCount">0</span>
+                </button>
+            </h2>
+            <div id="equipmentSection" class="accordion-collapse collapse show" data-bs-parent="#itemsAccordion">
+                <div class="accordion-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0" id="equipmentTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tag</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Upstream</th>
+                                    <th>Downstream</th>
+                                    <th>Operating Params</th>
+                                    <th>Design Params</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="p-2">
+                        <button class="btn btn-sm btn-outline-success" onclick="addRow('equipment')">
+                            <i class="bi bi-plus-lg"></i> Add Row
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instruments (Causes) -->
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#instrumentsSection">
+                    <i class="bi bi-toggles me-2"></i> Instruments / Causes
+                    <span class="badge bg-primary ms-2" id="instrumentsCount">0</span>
+                </button>
+            </h2>
+            <div id="instrumentsSection" class="accordion-collapse collapse" data-bs-parent="#itemsAccordion">
+                <div class="accordion-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0" id="instrumentsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tag</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Associated Equipment</th>
+                                    <th>Position</th>
+                                    <th>Line Service</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="p-2">
+                        <button class="btn btn-sm btn-outline-success" onclick="addRow('instruments')">
+                            <i class="bi bi-plus-lg"></i> Add Row
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety Devices -->
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#safetySection">
+                    <i class="bi bi-shield-check me-2"></i> Safety Devices
+                    <span class="badge bg-primary ms-2" id="safetyCount">0</span>
+                </button>
+            </h2>
+            <div id="safetySection" class="accordion-collapse collapse" data-bs-parent="#itemsAccordion">
+                <div class="accordion-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0" id="safetyTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tag</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Associated Equipment</th>
+                                    <th>Position</th>
+                                    <th>Line Service</th>
+                                    <th>Setpoint</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="p-2">
+                        <button class="btn btn-sm btn-outline-success" onclick="addRow('safety')">
+                            <i class="bi bi-plus-lg"></i> Add Row
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Parameters -->
+    <div class="card border-primary mt-4">
+        <div class="card-header bg-primary text-white">
+            <i class="bi bi-sliders me-2"></i> Analysis Parameters
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">Enter maximum pressures for consequence analysis. These values are required for worksheet generation.</p>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="maxPressureGas" class="form-label fw-semibold">Max Pressure — GAS Lines (PSIG)</label>
+                    <input type="number" class="form-control" id="maxPressureGas" placeholder="e.g., 5000" min="0" step="1">
+                    <div class="form-text">Maximum pressure for gas line causes</div>
+                </div>
+                <div class="col-md-4">
+                    <label for="maxPressureLiquid" class="form-label fw-semibold">Max Pressure — LIQUID Lines (PSIG)</label>
+                    <input type="number" class="form-control" id="maxPressureLiquid" placeholder="e.g., 2000" min="0" step="1">
+                    <div class="form-text">Maximum pressure for liquid line causes</div>
+                </div>
+                <div class="col-md-4">
+                    <label for="maxLiquidInventory" class="form-label fw-semibold">Max Liquid Inventory</label>
+                    <input type="text" class="form-control" id="maxLiquidInventory" placeholder="e.g., 500 BBL">
+                    <div class="form-text">Maximum liquid inventory volume</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="submitItems" class="btn btn-success btn-lg w-100 mt-4">
+        Submit & Continue to Deviations <i class="bi bi-arrow-right"></i>
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

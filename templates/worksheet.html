@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}HAZOP Worksheet - High Pressure{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-table"></i> HAZOP Worksheet — High Pressure</h2>
+    <div>
+        <button class="btn btn-outline-secondary me-2" onclick="window.print()">
+            <i class="bi bi-printer"></i> Print
+        </button>
+        <button class="btn btn-outline-primary me-2" id="downloadBtn">
+            <i class="bi bi-download"></i> Download HTML
+        </button>
+        <a href="{{ url_for('causes') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Causes
+        </a>
+    </div>
+</div>
+
+<!-- Scope Summary -->
+<div class="alert alert-info mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <strong>Drawing:</strong> {{ pdf_filename }}
+        </div>
+        <div class="col-md-3">
+            <strong>Gas Max P:</strong> {{ analysis_params.get('max_pressure_gas', 'N/A') }} PSIG
+        </div>
+        <div class="col-md-3">
+            <strong>Liquid Max P:</strong> {{ analysis_params.get('max_pressure_liquid', 'N/A') }} PSIG
+        </div>
+        <div class="col-md-2">
+            <strong>Liquid Inv:</strong> {{ analysis_params.get('max_liquid_inventory', 'N/A') }}
+        </div>
+    </div>
+    {% if worksheet.design_pressure %}
+    <div class="mt-1"><strong>Design Pressure:</strong> {{ worksheet.design_pressure }} PSIG</div>
+    {% endif %}
+    <hr class="my-2">
+    <small>
+        <span class="badge bg-success me-1">{{ worksheet.included_rows|length // 2 if worksheet.included_rows else 0 }} Included</span>
+        <span class="badge bg-secondary me-1">{{ worksheet.excluded_causes|length if worksheet.excluded_causes else 0 }} Excluded</span>
+        <span class="badge bg-warning text-dark">{{ worksheet.cross_referenced_causes|length if worksheet.cross_referenced_causes else 0 }} Cross-Referenced</span>
+    </small>
+</div>
+
+<!-- Main Worksheet Table -->
+{% if worksheet.included_rows %}
+<div class="table-responsive worksheet-table-wrapper mb-4">
+    <table class="table table-bordered table-sm worksheet-table" id="worksheetTable">
+        <thead class="table-dark sticky-top">
+            <tr>
+                <th class="ws-col-num">#</th>
+                <th class="ws-col-dev">Deviation</th>
+                <th class="ws-col-cause">Cause</th>
+                <th class="ws-col-ref">Drawing/Ref</th>
+                <th class="ws-col-intcon">Intermediate Consequence</th>
+                <th class="ws-col-cat">Category</th>
+                <th class="ws-col-scenario">Scenario / Final Impacts</th>
+                <th class="ws-col-pec">PEC</th>
+                <th class="ws-col-mit">Mitigation (CME Details)</th>
+                <th class="ws-col-cme">CME Name</th>
+                <th class="ws-col-cnt">CME #</th>
+                <th class="ws-col-rc">Risk C</th>
+                <th class="ws-col-rp">Risk P</th>
+                <th class="ws-col-rl">Risk Level</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in worksheet.included_rows %}
+            <tr class="{% if row.category == 'PAF' %}row-paf{% else %}row-pdlor{% endif %}">
+                <td class="fw-bold text-center">{{ row.number }}</td>
+                <td>{{ row.deviation }}</td>
+                <td>{{ row.cause }}</td>
+                <td class="text-nowrap">{{ row.drawing_ref }}</td>
+                <td class="ws-cell-intcon">{{ row.intermediate_consequence }}</td>
+                <td class="text-center fw-bold">
+                    <span class="badge {% if row.category == 'PAF' %}bg-primary{% else %}bg-warning text-dark{% endif %}">
+                        {{ row.category }}
+                    </span>
+                </td>
+                <td class="ws-cell-scenario">
+                    <ul class="scenario-bullets mb-0">
+                        {% for bullet in row.scenario_comments %}
+                        <li>{{ bullet }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+                <td class="text-center {% if row.pec == 'YES' %}pec-yes{% endif %}">
+                    {{ row.pec }}
+                </td>
+                <td class="ws-cell-mit">
+                    <ul class="mitigation-bullets mb-0">
+                        {% for bullet in row.mitigation_bullets %}
+                        <li>{{ bullet }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+                <td class="small">{{ row.cme_names }}</td>
+                <td class="text-center fw-bold">{{ row.cme_count }}</td>
+                <td class="text-center fw-bold">{{ row.risk_c }}</td>
+                <td class="text-center fw-bold">{{ row.risk_p }}</td>
+                <td class="text-center fw-bold risk-{{ row.risk_level|lower }}">
+                    {{ row.risk_level }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-warning">No included worksheet rows were generated.</div>
+{% endif %}
+
+<!-- Excluded Causes -->
+{% if worksheet.excluded_causes %}
+<div class="card mb-4">
+    <div class="card-header bg-secondary text-white">
+        <i class="bi bi-x-circle me-2"></i> Excluded Causes
+        <span class="badge bg-light text-dark ms-2">{{ worksheet.excluded_causes|length }}</span>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Cause</th>
+                    <th>Line Type</th>
+                    <th>Max Pressure</th>
+                    <th>Ratio</th>
+                    <th>Rationale</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ex in worksheet.excluded_causes %}
+                <tr class="excluded-row">
+                    <td><s>{{ ex.cause }}</s></td>
+                    <td>{{ ex.line_type }}</td>
+                    <td>{{ ex.max_pressure }} PSIG</td>
+                    <td>{{ ex.ratio }}x</td>
+                    <td class="text-muted">{{ ex.rationale }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Cross-Referenced Causes -->
+{% if worksheet.cross_referenced_causes %}
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <i class="bi bi-arrow-right-circle me-2"></i> Cross-Referenced Causes
+        <span class="badge bg-dark ms-2">{{ worksheet.cross_referenced_causes|length }}</span>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Cause</th>
+                    <th>Cross-Reference Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cr in worksheet.cross_referenced_causes %}
+                <tr>
+                    <td>{{ cr.cause }}</td>
+                    <td><i class="bi bi-arrow-right text-warning me-1"></i> {{ cr.note }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Legend -->
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-info-circle me-2"></i> Legend</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Row Colors</h6>
+                <span class="legend-swatch" style="background:#D6EAF8"></span> PAF (People, Assets, Facilities)
+                <br>
+                <span class="legend-swatch" style="background:#FDEBD0"></span> PD/LOR (Process Deviation / Loss of Revenue)
+            </div>
+            <div class="col-md-6">
+                <h6>Risk Levels</h6>
+                <span class="legend-swatch risk-a"></span> A — Negligible
+                <span class="legend-swatch risk-b"></span> B — Low
+                <span class="legend-swatch risk-c-swatch"></span> C — Medium
+                <span class="legend-swatch risk-d"></span> D — High
+                <span class="legend-swatch risk-e"></span> E — Critical
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/worksheet.js') }}"></script>
+{% endblock %}

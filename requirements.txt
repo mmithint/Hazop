@@ -1,0 +1,4 @@
+flask
+flask-session
+anthropic
+python-dotenv
