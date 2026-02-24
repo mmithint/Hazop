@@ -145,6 +145,10 @@
     background-color: #FDEBD0 !important;
 }
 
+.row-ecr {
+    background-color: #E8F5E9 !important;
+}
+
 /* Risk level cell colors */
 .risk-a {
     background-color: #28a745 !important;

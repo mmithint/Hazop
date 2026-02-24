@@ -169,6 +169,55 @@ Given: APC = {pdlor_apc_production_lost} bbls/day, $/bbl = {pdlor_dollar_per_bbl
 
 PD/LOR C=5 (>$250MM) is RARE for single instrument failures. It requires BOTH downtime >5 months AND high repair costs. When in doubt, assign C=4.
 
+## ECR (Environmental Impairment Cleanup/Remediation Cost) Consequence Calculation
+
+ECR consequence is determined by **spill volume** from liquid releases, mapped to environmental cleanup cost.
+
+### ECR applies ONLY when:
+- There is a LOPC (pressure ratio > 1.1x DP)
+- The release involves **liquid** (oil/condensate), NOT gas-only releases
+- For gas-only releases with no liquid inventory, ECR C = 1 (minimal environmental impact)
+
+### Step-by-step Calculation:
+
+1. **Determine if liquid release is possible**:
+   - Check if the equipment has liquid inventory (from max_liquid_inventory parameter)
+   - For full-bore rupture (>2x DP): assume worst-case liquid release up to max_liquid_inventory
+   - For flange leak (1.1x–1.5x DP): assume small leak, ~1–10 bbl release
+   - For large flange leak (1.5x–2x DP): assume moderate leak, ~10–100 bbl release
+
+2. **Estimate spill volume (bbl)** based on release hole size and duration before isolation:
+   - 1/4" hole (flange leak): ~1–10 bbl before isolation
+   - 3/4" hole (large flange leak): ~10–100 bbl before isolation
+   - Full-bore rupture: up to max_liquid_inventory (could be 100–600+ bbl)
+
+   **IMPORTANT**: Use MIDPOINT of applicable range as default estimate.
+
+3. **Map spill volume to ECR Consequence Level** (from Figure 2 - ECR Estimation Tool):
+
+   | ECR Consequence (C) | Spill Volume (bbl)      | Approximate Cost ($MM) |
+   |----------------------|-------------------------|------------------------|
+   | C = 1                | < 1 bbl                 | Up to $1MM             |
+   | C = 2                | >= 1 bbl to < 10 bbl    | $1MM to $5MM           |
+   | C = 3                | >= 10 bbl to < 100 bbl  | $5MM to $10MM          |
+   | C = 4                | >= 100 bbl to < 600 bbl | $10MM to $50MM         |
+   | C = 5                | >= 600 bbl              | $50MM or more          |
+
+   Note: For spill volumes < 500 bbl, the GOM Oil Spill Model is not directly applicable.
+   Use the proposed volume-based thresholds (conservative with respect to cost trend line).
+
+### Worked Example — ECR Calculation for >2x DP scenario:
+Given: Full-bore rupture, max_liquid_inventory = {max_liquid_inventory} bbl
+1. Release type: Full-bore rupture -> potential release of full liquid inventory
+2. Spill volume estimate: ~{max_liquid_inventory} bbl (using max_liquid_inventory)
+3. Map to ECR threshold table -> **determine C from volume**
+
+### Worked Example — ECR for 1.1x–1.5x DP (flange leak):
+Given: 1/4" flange leak, liquid present
+1. Release type: Small flange leak -> limited release before isolation
+2. Spill volume estimate: ~5 bbl (midpoint of 1–10 bbl)
+3. 5 bbl is >= 1 bbl to < 10 bbl -> **C = 2**
+
 ## Risk Matrix (5x5)
 
        C=1    C=2    C=3    C=4    C=5
@@ -217,6 +266,18 @@ CMEs for High Pressure deviation (ONLY these count as CMEs):
 3. **Gas Detection** — closes BSDV on confirmed gas release
 4. **Deluge/TSE** (Thermal Safety Element) — activated on confirmed fire/heat
 
+## CME Rules for ECR (Environmental Cleanup/Remediation)
+
+CMEs that mitigate environmental consequence (limit release duration/volume):
+1. **PSHH** (Pressure Switch High-High) — closes BSDV on high-high pressure, limiting release duration
+2. **Gas Detection** — closes BSDV on confirmed gas/leak, limiting release duration
+3. **BSDV** (Boarding Shutdown Valve) — isolates flow to limit spill volume
+
+**NOT CMEs for ECR** (do NOT count these for ECR rows):
+- PSV (vents to atmosphere — does not prevent environmental release)
+- Deluge/TSE (fire suppression — does not prevent spill)
+- Alarms, manual interventions
+
 ## Scenario Comment Templates
 
 Generate exactly 4 bullet points for each row's scenario_comments:
@@ -252,6 +313,14 @@ Must show the actual calculated values. Use this format:
 - C=3: "Estimated downtime: X days. Production loss: $ZMM + Repair: $WMM = Total: $XXXMM ($20–50MM). Consequence level 3."
 - C=2: "Estimated downtime: X days. Production loss: $ZMM + Repair: $WMM = Total: $XXXMM ($1–20MM). Consequence level 2."
 - C=1: "Minimal downtime expected. Total financial loss <$1MM. Consequence level 1."
+
+**Bullet #4 — For ECR rows (environmental impact)**:
+Must show the estimated spill volume and cost. Use this format:
+- C=5: "Estimated spill volume: ~X bbl. Environmental cleanup cost: >$50MM. Consequence level 5."
+- C=4: "Estimated spill volume: ~X bbl. Environmental cleanup cost: $10–50MM. Consequence level 4."
+- C=3: "Estimated spill volume: ~X bbl. Environmental cleanup cost: $5–10MM. Consequence level 3."
+- C=2: "Estimated spill volume: ~X bbl. Environmental cleanup cost: $1–5MM. Consequence level 2."
+- C=1: "No significant liquid release expected. Environmental cleanup cost <$1MM. Consequence level 1."
 
 ## Probability Calculation
 
@@ -293,7 +362,7 @@ NOTE: Extract design_pressure from the major_equipment design_parameters field. 
    - Gas cause with ratio <= 1.1 -> add to excluded_causes
    - Liquid cause in HP -> add to cross_referenced_causes (liquid causes increase level, not pressure)
    - If liquid ratio < 1.1 -> add to excluded_causes instead
-5. For each INCLUDED cause, generate TWO rows:
+5. For each INCLUDED cause, generate THREE rows:
    a. Row "Na" (PAF category):
       - Determine hole size from Table 2 using pressure ratio
       - Look up PAF consequence C from Table 4 using max_pressure and hole size
@@ -314,7 +383,18 @@ NOTE: Extract design_pressure from the major_equipment design_parameters field. 
       - Look up risk_level from Risk Matrix
       - Generate 4 scenario comment bullets (same pressure/structural bullets;
         bullet #4 should state estimated downtime, calculated financial loss, and consequence level)
-6. Number causes sequentially: 1a/1b, 2a/2b, 3a/3b, etc.
+   c. Row "Nc" (ECR category):
+      - Determine if liquid release is possible (check max_liquid_inventory)
+      - If no liquid inventory or no LOPC: set ECR C = 1
+      - Estimate spill volume based on hole size and liquid inventory (use MIDPOINT)
+      - Map spill volume to ECR consequence C using the volume-based thresholds
+      - Include ecr_spill_volume_bbl and ecr_estimated_cost_mm in JSON output
+      - Identify ECR-specific CMEs (PSHH, Gas Detection, BSDV — NOT PSV or Deluge)
+      - Calculate P = max(1, C - CME_count)
+      - Look up risk_level from Risk Matrix
+      - Generate 4 scenario comment bullets (same pressure/structural bullets;
+        bullet #4 should state estimated spill volume, cleanup cost, and consequence level)
+6. Number causes sequentially: 1a/1b/1c, 2a/2b/2c, 3a/3b/3c, etc.
 
 === OUTPUT FORMAT ===
 
@@ -356,6 +436,24 @@ Return ONLY valid JSON (no markdown fences, no explanation) with this exact stru
       "risk_level": "B",
       "pdlor_downtime_days": 120,
       "pdlor_total_loss_mm": 214
+    }},
+    {{
+      "number": "1c",
+      "deviation": "High Pressure",
+      "cause": "FSV-1010 (Gas outlet) fails closed",
+      "drawing_ref": "DWG-XXXX",
+      "intermediate_consequence": "Potential increase in ...",
+      "category": "ECR",
+      "scenario_comments": ["bullet1", "bullet2", "bullet3", "bullet4"],
+      "pec": "—",
+      "mitigation_bullets": ["PSHH-1010: Closes BSDV on high-high pressure", "Gas Detection: Closes BSDV on confirmed release"],
+      "cme_names": "PSHH-1010; Gas Detection",
+      "cme_count": 2,
+      "risk_c": 2,
+      "risk_p": 1,
+      "risk_level": "A",
+      "ecr_spill_volume_bbl": 5,
+      "ecr_estimated_cost_mm": 3
     }}
   ],
   "excluded_causes": [

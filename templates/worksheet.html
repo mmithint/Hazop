@@ -38,7 +38,7 @@
     {% endif %}
     <hr class="my-2">
     <small>
-        <span class="badge bg-success me-1">{{ worksheet.included_rows|length // 2 if worksheet.included_rows else 0 }} Included</span>
+        <span class="badge bg-success me-1">{{ worksheet.included_rows|length // 3 if worksheet.included_rows else 0 }} Included</span>
         <span class="badge bg-secondary me-1">{{ worksheet.excluded_causes|length if worksheet.excluded_causes else 0 }} Excluded</span>
         <span class="badge bg-warning text-dark">{{ worksheet.cross_referenced_causes|length if worksheet.cross_referenced_causes else 0 }} Cross-Referenced</span>
     </small>
@@ -68,14 +68,14 @@
         </thead>
         <tbody>
             {% for row in worksheet.included_rows %}
-            <tr class="{% if row.category == 'PAF' %}row-paf{% else %}row-pdlor{% endif %}">
+            <tr class="{% if row.category == 'PAF' %}row-paf{% elif row.category == 'PD/LOR' %}row-pdlor{% else %}row-ecr{% endif %}">
                 <td class="fw-bold text-center">{{ row.number }}</td>
                 <td>{{ row.deviation }}</td>
                 <td>{{ row.cause }}</td>
                 <td class="text-nowrap">{{ row.drawing_ref }}</td>
                 <td class="ws-cell-intcon">{{ row.intermediate_consequence }}</td>
                 <td class="text-center fw-bold">
-                    <span class="badge {% if row.category == 'PAF' %}bg-primary{% else %}bg-warning text-dark{% endif %}">
+                    <span class="badge {% if row.category == 'PAF' %}bg-primary{% elif row.category == 'PD/LOR' %}bg-warning text-dark{% else %}bg-success{% endif %}">
                         {{ row.category }}
                     </span>
                 </td>
@@ -184,6 +184,8 @@
                 <span class="legend-swatch" style="background:#D6EAF8"></span> PAF (People, Assets, Facilities)
                 <br>
                 <span class="legend-swatch" style="background:#FDEBD0"></span> PD/LOR (Process Deviation / Loss of Revenue)
+                <br>
+                <span class="legend-swatch" style="background:#E8F5E9"></span> ECR (Environmental Cleanup/Remediation)
             </div>
             <div class="col-md-6">
                 <h6>Risk Levels</h6>
